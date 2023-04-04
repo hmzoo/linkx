@@ -2,6 +2,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
+const fs = require('fs')
 
 let RedisStore = require("connect-redis").default;
 const Redis = require("ioredis");
@@ -36,6 +38,8 @@ app.use(session(
       maxAge: 86400000
     }
   }));
+
+
 
 
 

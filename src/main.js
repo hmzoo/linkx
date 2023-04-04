@@ -1,21 +1,25 @@
 import {linkxStore} from './linkx.js';
+import Handlebars from 'handlebars';
+const template = document.getElementById('template-linkx').innerHTML;
+const compiler = Handlebars.compile(template);
 
 window.linkx=linkxStore;
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
+linkxStore.start_stream();
+linkxStore.init_peer();
+linkxStore.hb();
+window.addEventListener('beforeunload', () => { linkxStore.onleave() });
+window.setInterval(() => {
+  linkxStore.hb();
+  linkxStore.synchro();
+  review();
+}, 3000);
 
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      
-    </a>
-    <h1>Hello Vite!</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more COOL !!
-    </p>
-  </div>
-`
+
+
+const review =()=>{
+document.querySelector('#app').innerHTML = compiler(linkxStore);
+let video = document.getElementById('selfvideo');
+video.srcObject = linkxStore.stream;
+console.log
+}
