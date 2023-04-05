@@ -26,10 +26,10 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "handlebars": "^4.7.7",
     "ioredis": "^5.3.1",
     "peerjs": "^1.4.7",
     "store2": "^2.14.2",
+    "underscore": "^1.13.6",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

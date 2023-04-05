@@ -7,8 +7,6 @@ axios.defaults.withCredentials = true;
 
 const site_host = import.meta.env.VITE_SITE_HOST || "linkx.com"
 const site_title = import.meta.env.VITE_SITE_TITLE || "LINKX"
-
-
 const axios_url = ""
 
 
@@ -16,131 +14,87 @@ const axios_url = ""
 
 export const linkxStore = {
 
-    camOn: localstore("camOn") == null || localstore("camOn"),
-    micOn: !(localstore("micOn") == null) || localstore("micOn"),
-    camlabel: "",
-    miclabel: "",
-    showme: localstore("showme") == null || localstore("showme"),
-    stream_error: "",
+    site_host: site_host,
+    site_title: site_title,
+
+    medias_cam_on: localstore("medias_cam_on") == null || localstore("medias_cam_on"),
+    medias_mic_on: !(localstore("medias_mic_on") == null) || localstore("medias_mic_on"),
+    medias_cam_label: "",
+    medias_mic_label: "",
+    medias_show_me: localstore("medias_show_me") == null || localstore("medias_show_me"),
+    medias_stream_error: "",
+
+    server_message: "",
+
+    my_key: "000000",
     my_stream: null,
     my_message: "",
     my_data: {},
-    server_message: "",
-    my_key: "000000",
-    site_host: site_host,
-    site_title: site_title,
+
     flux: [],
     messages: [],
 
-    last_tik: Date.now(),
 
-    set_stream_status(data) {
-        this.camOn = data.cam
-        this.micOn = data.mic
-        this.stream_error = data.error
-        this.my_stream = data.stream
-        this.camlabel = data.camlabel
-        this.miclabel = data.miclabel
+    stream() {
+        stream_start(this.medias_cam_on, this.medias_mic_on)
     },
-    set_stream_labels(v, a) {
-        this.camlabel = v
-        this.miclabel = a
-
+    switch_cam() {
+        this.medias_cam_on = !this.medias_cam_on;
+        this.stream()
     },
-    start_stream() {
-        slufe_stream_start(this.camOn, this.micOn)
+    switch_mic() {
+        this.medias_mic_on = !this.medias_mic_on;
+        this.stream()
     },
-    switchcam() {
-        this.camOn = !this.camOn;
-        this.start_stream()
+    swap_cam() {
+        this.medias_cam_label = nextCam();
+        this.stream()
     },
-    switchmic() {
-        this.micOn = !this.micOn;
-        this.start_stream()
+    swap_mic() {
+        this.medias_mic_label = nextMic();
+        this.stream()
     },
-    swapcam() {
-        this.camlabel = nextCam();
-        this.start_stream()
-    },
-    swapmic() {
-        this.miclabel = nextMic();
-        this.start_stream()
-    },
-    set_key_msg(k, m) {
-        this.my_key = k | "no key";
-        this.server_message = m || ""
+    switch_show_me() {
+        this.medias_show_me = !this.medias_show_me;
+        localstore("medias_show_me", this.medias_show_me)
     },
 
-    hb() {
+    req_hb() {
         axios.get(axios_url + '/hb').then(res => {
             update_data(res.data);
         })
     },
-    renew() {
+    req_renew() {
         reset_mypeer();
         axios.get(axios_url + '/new').then(res => {
             update_data(res.data);
             init_mypeer();
         })
     },
-    set(v) {
+    req_set(v) {
         axios.get(axios_url + '/set', { params: { val: v } }).then(res => {
             update_data(res.data);
         })
     },
-    add(k) {
+    req_add(k) {
         axios.get(axios_url + '/add', { params: { key: k } }).then(res => {
             update_data(res.data);
         })
     },
-    clean() {
+    req_clean() {
         axios.get(axios_url + '/clean').then(res => {
             update_data(res.data);
         })
     },
-    tik() {
-        this.last_tik = Date.now()
-    },
-    update_flux() {
 
-        let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false } });
-
-        tab.push({ id: myPeer.id, keynum: this.my_key, stream: slufe_stream_muted || fakestream, message: mymessage, connected: true, me: true })
-
-        this.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
-
-
-    },
-    update_messages(m) {
-        this.messages.splice(0, this.messages.length, ...m)
-    },
-    message(k, m, c) {
-        if (m != "") {
-            this.messages.push({ keynum: k, msg: m, cat: c })
-        }
-    },
-
-    send_message(msg) {
-        mymessage = msg;
-        this.message(this.key, msg, "me");
+    message(msg) {
+        this.my_message = msg;
+        this.messages.push({ keynum: this.my_key, msg: this.my_message, cat: "me" })
         for (let i = 0; i < peers.length; i++) {
             if (peers[i].connection && peers[i].connection.open) {
-                peers[i].connection.send({ keynum: this.my_key, msg: msg })
+                peers[i].connection.send({ keynum: this.my_key, msg: this.my_message })
             }
         }
-    },
-    send_stream() {
-
-        for (let i = 0; i < peers.length; i++) {
-            if (myPeer && peers[i].connection && peers[i].connection.open) {
-                if (peers[i].call) { peers[i].call.close() }
-                init_call(peers[i].id);
-            }
-        }
-    },
-    switchshowme() {
-        this.showme = !this.showme;
-        localstore("showme", this.showme)
     },
     init_peer() {
         reset_mypeer();
@@ -152,11 +106,11 @@ export const linkxStore = {
     synchro() {
         synchro_fwl_peers();
     },
-    onleave() {
+    leave() {
         reset_mypeer();
-        localstore("showme", this.showme)
-        localstore("micOn", this.micOn)
-        localstore("camOn", this.camOn)
+        localstore("medias_show_me", this.medias_show_me)
+        localstore("medias_mic_on", this.medias_mic_on)
+        localstore("medias_cam_on", this.medias_cam_on)
         localstore("audioIndex", audioIndex)
         localstore("videoIndex", videoIndex)
         localstore("audioId", audioId)
@@ -164,9 +118,9 @@ export const linkxStore = {
     }
 }
 ////////////GETMEDIA
-let slufe_stream_status = { stream: null, cam: false, mic: false, camlabel: "", miclabel: "", error: "" };
-let slufe_stream = null;
-let slufe_stream_muted = null;
+
+let stream = null;
+let stream_muted = null;
 let videoDevices = [];
 let audioDevices = [];
 let videoIndex = localstore("videoIndex") || 0;
@@ -174,49 +128,43 @@ let audioIndex = localstore("audioIndex") || 0;
 let videoId = localstore("videoId") || "";
 let audioId = localstore("audioId") || "";
 
-const slufe_stream_start = (camOn, micOn) => {
-    slufe_stream_status = { cam: camOn, mic: micOn, miclabel: curMic(), camlabel: curCam(), error: "" };
-    slufe_stream_kill()
-    if (micOn || camOn) {
+const stream_start = (medias_cam_on, medias_mic_on) => {
+    stream_kill()
+    if (medias_mic_on || medias_cam_on) {
         navigator.mediaDevices
-            .getUserMedia(getConstrains(camOn, micOn))
+            .getUserMedia(getConstrains(medias_cam_on, medias_mic_on))
             .then(s => {
 
                 listDevices();
-                slufe_stream = s;
-                slufe_muted_stream();
-                linkxStore.set_stream_status({ stream: s, cam: camOn, mic: micOn, miclabel: curMic(), camlabel: curCam(), error: "" });
-                linkxStore.send_stream();
+                stream = s;
+                stream_muted = stream.clone()
+                let audiotracks = stream_muted.getAudioTracks();
+                if (audiotracks.length > 0) { stream_muted.removeTrack(audiotracks[0]); }
+
+                linkx_set_stream_status({ stream: s, cam: medias_cam_on, mic: medias_mic_on, medias_mic_label: curMic(), medias_cam_label: curCam(), error: "" });
+                peers_send_stream();
             })
             .catch(error => {
                 console.log(error)
-                let stream_error = "⚠\nMay the browser didn't support or there is some errors.\n Or \n Camera not authorized. please check your media permissions settings"
-                linkxStore.set_stream_status({ stream: null, cam: false, mic: false, miclabel: curMic(), camlabel: curCam(), error: stream_error });
-                slufe_stream_kill()
+                let medias_stream_error = "⚠\nMay the browser didn't support or there is some errors.\n Or \n Camera not authorized. please check your media permissions settings"
+                linkx_set_stream_status({ stream: null, cam: false, mic: false, medias_mic_label: curMic(), medias_cam_label: curCam(), error: medias_stream_error });
+                stream_kill()
             })
     } else {
-        slufe_stream_kill()
-        linkxStore.set_stream_status({ stream: null, cam: false, mic: false, miclabel: curMic(), camlabel: curCam(), error: "" });
+        stream_kill()
+        linkx_set_stream_status({ stream: null, cam: false, mic: false, medias_mic_label: curMic(), medias_cam_label: curCam(), error: "" });
     }
 }
 
-const slufe_muted_stream = () => {
-    if (slufe_stream) {
-        slufe_stream_muted = slufe_stream.clone()
 
-        let audiotracks = slufe_stream_muted.getAudioTracks();
-        if (audiotracks.length > 0) { slufe_stream_muted.removeTrack(audiotracks[0]); }
+const stream_kill = () => {
+    if (stream) {
+        stream.getTracks().forEach(track => { track.stop() })
+        stream = null
     }
-
-}
-const slufe_stream_kill = () => {
-    if (slufe_stream) {
-        slufe_stream.getTracks().forEach(track => { track.stop() })
-        slufe_stream = null
-    }
-    if (slufe_stream_muted) {
-        slufe_stream_muted.getTracks().forEach(track => { track.stop() })
-        slufe_stream_muted = null
+    if (stream_muted) {
+        stream_muted.getTracks().forEach(track => { track.stop() })
+        stream_muted = null
     }
 }
 
@@ -225,19 +173,19 @@ const listDevices = () => {
         navigator.mediaDevices.enumerateDevices().then(devices => {
             audioDevices = devices.filter(device => device.kind === 'audioinput');
             videoDevices = devices.filter(device => device.kind === 'videoinput');
-            linkxStore.set_stream_labels(curCam(), curMic())
+            linkx_set_stream_labels(curCam(), curMic())
         }).catch(error => { console.log(error) });
     }
 
 }
-let getConstrains = (camOn, micOn) => {
+let getConstrains = (medias_cam_on, medias_mic_on) => {
     let audio = { echoCancellation: true }
     let video = true
     if (videoId != "") { video = { deviceId: { exact: videoId } } }
     if (audioId != "") { audio.deviceId = { exact: audioId } }
     let constrains = { audio: audio, video: video }
-    if (!camOn) { constrains.video = false }
-    if (!micOn) { constrains.audio = false }
+    if (!medias_cam_on) { constrains.video = false }
+    if (!medias_mic_on) { constrains.audio = false }
     return constrains
 }
 let curCam = () => {
@@ -265,27 +213,48 @@ let nextMic = () => {
     return audioDevices[audioIndex].label
 }
 
+const linkx_set_stream_status=(data)=> {
+    linkxStore.medias_cam_on = data.cam
+    linkxStore.medias_mic_on = data.mic
+    linkxStore.medias_stream_error = data.error
+    linkxStore.my_stream = data.stream
+    linkxStore.medias_cam_label = data.medias_cam_label
+    linkxStore.medias_mic_label = data.medias_mic_label
+}
+const linkx_set_stream_labels = (v, a)=> {
+    linkxStore.medias_cam_label = v
+    linkxStore.medias_mic_label = a
+
+}
+
+const peers_send_stream=()=> {
+
+    for (let i = 0; i < peers.length; i++) {
+        if (myPeer && peers[i].connection && peers[i].connection.open) {
+            if (peers[i].call) { peers[i].call.close() }
+            init_call(peers[i].id);
+        }
+    }
+}
+
 ////////////FWL
 
-let slufe_key = "000000"
-let slufe_fwl = []
+let key = "000000"
+let fwl = []
 
 const update_data = (data) => {
-    slufe_key = data.key || "no key";
-    slufe_fwl = data.fwl || [];
-    linkxStore.set_key_msg(slufe_key, data.msg || "")
-    console.log("updated");
+    key = data.key || "no key";
+    fwl = data.fwl || [];
+    linkxStore.my_key = key
+    linkxStore.server_message = data.msg || ""
 }
+
+
 
 ///////////PEERJS
 
-
 let myPeer = null;
 let peers = []
-let failed_peerid = [];
-let mymessage = "";
-
-
 
 const createfakestream = () => {
     let color1 = "#24A8AC", color2 = "#0087CB";
@@ -317,8 +286,8 @@ const new_peer = (id) => {
     var index = peers.map(function (e) { return e.id; }).indexOf(id);
     if (index < 0) {
         let keynum = "000000"
-        let ifwl = slufe_fwl.map(function (e) { return e.d; }).indexOf(id);
-        if (ifwl >= 0) { keynum = slufe_fwl[ifwl].k }
+        let ifwl = fwl.map(function (e) { return e.d; }).indexOf(id);
+        if (ifwl >= 0) { keynum = fwl[ifwl].k }
         index = peers.push({ id: id, keynum: keynum, stream: null, message: "", connection: null, call: null, connected: false, called: false, streamid: "", cpt: 0 }) - 1;
     }
     return peers[index];
@@ -343,25 +312,25 @@ const remove_peer = (id) => {
 const onConnectionOpen = (p, cxn) => {
     p.connection = cxn
     p.connected = true
-    cxn.send({ keynum: slufe_key });
-    linkxStore.message(p.keynum, "connected", "info")
-    init_call(cxn.peer, slufe_stream)
+    cxn.send({ keynum: key });
+    linkx_message(p.keynum, "connected", "info")
+    init_call(cxn.peer, stream)
 }
 
 const onConnectionData = (p, data) => {
     if (data.keynum) { p.keynum = data.keynum }
     if (data.msg) {
         p.message = data.msg
-        linkxStore.message(p.keynum, data.msg, "peer")
+        linkx_message(p.keynum, data.msg, "peer")
     }
-    if (data.ask && data.ask == "callme" && linkxStore.getmystream()) {
+    if (data.ask && data.ask == "callme" && stream) {
         // init_call(cxn.peer, store.stream);
     }
 }
 
 const onConnectionClose = (p) => {
     p.connected = false
-    linkxStore.message(p.keynum, "connection closed", "info")
+    linkx_message(p.keynum, "connection closed", "info")
 }
 
 // Calls
@@ -389,7 +358,7 @@ const onCallStop = (p) => {
 const init_mypeer = () => {
     myPeer = new Peer()
     myPeer.on('open', (id) => {
-        linkxStore.set(id);
+        linkxStore.req_set(id);
         myPeer.on('connection', (cxn) => {
             let p = new_peer(cxn.peer);
             cxn.on('open', () => { onConnectionOpen(p, cxn) })
@@ -398,8 +367,8 @@ const init_mypeer = () => {
         })
         myPeer.on('call', (call) => {
             let p = new_peer(call.peer);
-            if (slufe_stream) {
-                call.answer(slufe_stream)
+            if (stream) {
+                call.answer(stream)
             } else {
                 call.answer()
             }
@@ -418,7 +387,6 @@ const init_mypeer = () => {
                 let err_msg = serr.substring(0, 32);
                 if (err_msg == "Error: Could not connect to peer") {
                     let err_id = serr.substring(33);
-                    // failed_peerid.push(err_id);
                 }
             }
             remove_peer(id);
@@ -456,8 +424,8 @@ const init_call = (pid) => {
 
     let call
 
-    if (slufe_stream) {
-        call = myPeer.call(pid, slufe_stream);
+    if (stream) {
+        call = myPeer.call(pid, stream);
     } else {
         //call = myPeer.call(pid, createfakestream());
     }
@@ -474,8 +442,8 @@ const init_call = (pid) => {
 
 const synchro_fwl_peers = () => {
 
-    for (let i = 0; i < slufe_fwl.length; i++) {
-        let f = slufe_fwl[i];
+    for (let i = 0; i < fwl.length; i++) {
+        let f = fwl[i];
         var index = peers.map(function (e) { return e.id; }).indexOf(f.d);
         if (index < 0) {
             init_connection(f.d, f.k);
@@ -491,7 +459,7 @@ const synchro_fwl_peers = () => {
     let todelete = [];
 
     for (let i = 0; i < peers.length; i++) {
-        var index = slufe_fwl.map(function (e) { return e.d; }).indexOf(peers[i].id);
+        var index = fwl.map(function (e) { return e.d; }).indexOf(peers[i].id);
         if (index < 0) {
             todelete.push(peers[i].id)
         }
@@ -501,8 +469,23 @@ const synchro_fwl_peers = () => {
         remove_peer(todelete[i]);
     }
 
-    linkxStore.update_flux();
+   
 
+        let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false } });
+
+        tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true })
+
+        linkxStore.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
+
+
+    
+
+}
+
+const linkx_message=(k, m, c)=>{
+    if (m != "") {
+        linkxStore.messages.push({ keynum: k, msg: m, cat: c })
+    }
 }
 
 
