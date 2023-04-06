@@ -12,6 +12,13 @@ const axios_url = ""
 
 //////////////////// STORE
 
+let updates ={
+        infos:true,
+        stream:true,
+        flux:true,
+        messages:true  
+}
+
 export const linkxStore = {
 
     site_host: site_host,
@@ -33,7 +40,27 @@ export const linkxStore = {
 
     flux: [],
     messages: [],
-
+    
+    infos_updated(){
+        let r = updates.infos;
+        updates.infos =false;
+        return r;
+    },
+    stream_updated(){
+        let r = updates.stream;
+        updates.stream =false;
+        return r;
+    },
+    flux_updated(){
+        let r = updates.flux;
+        updates.flux =false;
+        return r;
+    },
+    messages_updated(){
+        let r = updates.messages;
+        updates.messages =false;
+        return r;
+    },
 
     stream() {
         stream_start(this.medias_cam_on, this.medias_mic_on)
@@ -95,6 +122,7 @@ export const linkxStore = {
                 peers[i].connection.send({ keynum: this.my_key, msg: this.my_message })
             }
         }
+        updates.messages=true;
     },
     init_peer() {
         reset_mypeer();
@@ -143,6 +171,7 @@ const stream_start = (medias_cam_on, medias_mic_on) => {
 
                 linkx_set_stream_status({ stream: s, cam: medias_cam_on, mic: medias_mic_on, medias_mic_label: curMic(), medias_cam_label: curCam(), error: "" });
                 peers_send_stream();
+                updates.stream =true;
             })
             .catch(error => {
                 console.log(error)
@@ -166,6 +195,7 @@ const stream_kill = () => {
         stream_muted.getTracks().forEach(track => { track.stop() })
         stream_muted = null
     }
+    updates.stream =true;
 }
 
 const listDevices = () => {
@@ -247,6 +277,7 @@ const update_data = (data) => {
     fwl = data.fwl || [];
     linkxStore.my_key = key
     linkxStore.server_message = data.msg || ""
+    updates.infos=true;
 }
 
 
@@ -485,6 +516,7 @@ const synchro_fwl_peers = () => {
 const linkx_message=(k, m, c)=>{
     if (m != "") {
         linkxStore.messages.push({ keynum: k, msg: m, cat: c })
+        updates.messages=true;
     }
 }
 
