@@ -1,8 +1,8 @@
-import {linkxStore} from './linkx.js';
+import { linkxStore } from './linkx.js';
 import * as _ from 'underscore';
 
 
-window.linkx=linkxStore;
+window.linkx = linkxStore;
 
 linkxStore.stream();
 linkxStore.init_peer();
@@ -14,33 +14,97 @@ window.setInterval(() => {
   review();
 }, 3000);
 
-var tpl_infos = `<div id="output">
-<div><video id="me" style="width:80px"  muted="true" autoplay></video></div>
+let submit_addkey =()=>{
+  window.linkx.req_add(document.querySelector('#addkey').value);
+  return false;
+}
+
+let submit_sendmessage =()=>{
+  window.linkx.message(document.querySelector('#sendmessage').value);
+  return false;
+}
+
+
+var tpl_main = `<div>
+<div id="infos"></div>
+<div><input type='text' value="" id="addkey" ><button id="btn_addkey" >ADD</button></div>
+<div id="my_stream"><video id="me" style="width:80px"  muted="true" autoplay></video></div>
+<div id="medias"></div>
+<div id="messages"></div>
+<div><input type='text' value="" id="sendmessage" ><button id="btn_sendmessage" >SEND</button></div>
+<div id="flux"></div>
+</div>
+`
+document.querySelector('#app').innerHTML = _.template(tpl_main)(linkxStore);
+document.querySelector('#btn_addkey').addEventListener('click', ()=>{window.linkx.req_add(document.querySelector('#addkey').value);});
+document.querySelector('#btn_sendmessage').addEventListener('click', ()=>{window.linkx.message(document.querySelector('#sendmessage').value);});
+
+var tpl_medias = `
+<button onclick='window.linkx.switch_cam()' ><%= medias_cam_on ?  "CAM ON ("+medias_cam_label+")" : "CAM OFF" %></button><button onclick='window.linkx.swap_cam()'>►</button><br/>
+<button onclick='window.linkx.switch_mic()' ><%= medias_mic_on ?  "MIC ON("+medias_mic_label+")" : "MIC OFF" %></button><button onclick='window.linkx.swap_mic()'>►</button><br/>
+`
+var fcn_medias = _.template(tpl_medias);
+
+var tpl_infos = `
 KEY: <%= my_key %> <br/>
 MESSAGE: <%= my_message %> <br/>
-<%= medias_cam_on ?  "CAM ON ("+medias_cam_label+")" : "CAM OFF" %><br/>
-<%= medias_mic_on ?  "MIC ON("+medias_mic_label+")" : "MIC OFF" %><br/>
 INFO: <%= server_message %> <br/>
 <% if (medias_stream_error != "") { %> MEDIAS ERROR : <%= medias_stream_error %> <% } %> <br/>
-</div>`;
-var fcn_infos = _.template(tpl_infos); 
+`;
+var fcn_infos = _.template(tpl_infos);
 
-var tpl_messages = `<div id="output2">
+var tpl_messages = `
 MESSAGES :<br/>
 <% _.each(messages, function(msg){ %>
 <%= msg.keynum %>: <%= msg.msg %> (<%= msg.cat %>)</br>
-
-  <% }); %>
-</div>`;
+<% }); %>
+`;
 var fcn_messages = _.template(tpl_messages);
 
-const review =()=>{
+var tpl_flux = `
+<% _.each(flux, function(f){ %>
+<%= f.keynum %>: <%= f.message %></br>
+<video id="<%= f.id %>" style="width:80px"   autoplay></video></br>
+<% }); %>
+`;
+var fcn_flux = _.template(tpl_flux);
 
-document.querySelector('#infos').innerHTML = fcn_infos(linkxStore);
-document.querySelector('#messages').innerHTML = fcn_messages(linkxStore);
-document.getElementById("me").srcObject = linkxStore.my_stream;
+const review = () => {
 
-//let video = document.getElementById('selfvideo');
-//video.srcObject = linkxStore.stream;
+  let updates = linkxStore.get_updates();
+  if (updates.infos) {
+    document.querySelector('#infos').innerHTML = fcn_infos(linkxStore);
+  }
+  if (updates.medias) {
+    document.querySelector('#medias').innerHTML = fcn_medias(linkxStore);
+  }
+
+  if (updates.messages) {
+    document.querySelector('#messages').innerHTML = fcn_messages(linkxStore);
+  }
+
+  if (updates.stream) {
+    document.querySelector('#me').srcObject = linkxStore.my_stream;
+  }
+
+  if (updates.flux) {
+    if(updates.list_flux_added.length>0 ||updates.list_flux_deleted.length>0 ){
+    document.querySelector('#flux').innerHTML = fcn_flux(linkxStore);
+    for(let i=0;i<linkxStore.flux.length;i=i+1){
+      document.getElementById(linkxStore.flux[i].id).srcObject = linkxStore.flux[i].stream;
+    }
+   }
+   if(updates.list_flux_streams_updated.length>0){
+    for(let i=0;i<linkxStore.flux.length;i=i+1){
+            if(updates.list_flux_streams_updated.includes(linkxStore.flux[i].id)){
+              document.getElementById(linkxStore.flux[i].id).srcObject = linkxStore.flux[i].stream;
+            }
+    }
+   }
+
+  }
+
+  //let video = document.getElementById('selfvideo');
+  //video.srcObject = linkxStore.stream;
 
 }

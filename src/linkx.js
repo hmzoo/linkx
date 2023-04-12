@@ -12,31 +12,50 @@ const axios_url = ""
 
 //////////////////// UPDATE
 
-let updates ={
-        infos:true,
-        medias:true,
-        stream:true,
-        flux:{stream:[],data:[],add:[],del:[]},
-        messages:true,   
+let updates = {
+    infos: true,
+    medias: true,
+    stream: true,
+    data: true,
+    flux: true,
+    messages: true,
+    list_flux_streams_updated: [],
+    list_flux_datas_updated: [],
+    list_flux_added: [],
+    list_flux_deleted: []
 }
-let infos_updated =() => {updates.infos=true}
-let medias_updated =() => {updates.medias=true}
-let stream_updated =() => {updates.stream=true}
-let messages_updated =() => {updates.messages=true}
-let flux_stream_updated=(id) =>{ updates.flux.stream.push(id) }
-let flux_data_updated=(id) =>{ updates.flux.data.push(id) }
-let flux_add_updated=(id) =>{ updates.flux.add.push(id) }
-let flux_del_updated=(id) =>{ updates.flux.del.push(id) }
 
-let infos_is_updated =() => {let r=updates.infos;updates.infos=false;return r}
-let medias_is_updated =() => {let r=updates.medias;updates.medias=false;return r}
-let stream_is_updated =() => {let r=updates.stream;updates.stream=false;return r}
-let messages_is_updated =() => {let r=updates.messages;updates.messages=false;return r}
 
-let flux_stream_is_updated =() => {let r=updates.flux.stream;updates.flux.stream=[];return r}
-let flux_data_is_updated =() => {let r=updates.flux.data;updates.flux.data=[];return r}
-let flux_add_is_updated =() => {let r=updates.flux.add;updates.flux.add=[];return r}
-let flux_del_is_updated =() => {let r=updates.flux.del;updates.flux.del=[];return r}
+
+let infos_updated = () => { updates.infos = true }
+let medias_updated = () => { updates.medias = true }
+let stream_updated = () => { updates.stream = true }
+let data_updated = () => { updates.data = true }
+let messages_updated = () => { updates.messages = true }
+let flux_updated = () => { updates.flux = true }
+
+let flux_stream_changed = (id) => { updates.list_flux_streams_updated.push(id); }
+let flux_data_changed = (id) => { updates.list_flux_datas_updated.push(id); }
+let flux_added = (id) => { updates.list_flux_added.push(id); }
+let flux_deleted = (id) => { updates.list_flux_deleted.push(id); }
+
+let reset_updates = () => {
+    let u = updates
+    updates = {
+        infos: false,
+        medias: false,
+        stream: false,
+        data: false,
+        flux: false,
+        messages: false,
+        list_flux_streams_updated: [],
+        list_flux_datas_updated: [],
+        list_flux_added: [],
+        list_flux_deleted: []
+    }
+    return u;
+
+}
 
 //////////////////// STORE
 export const linkxStore = {
@@ -60,16 +79,11 @@ export const linkxStore = {
 
     flux: [],
     messages: [],
-    
-    infos_is_updated : infos_is_updated,
-    medias_is_updated : medias_is_updated,
-    stream_is_updated : stream_is_updated,
-    messages_is_updated : messages_is_updated,
-    flux_stream_is_updated : flux_stream_is_updated,
-    flux_data_is_updated: flux_data_is_updated,
-    flux_add_is_updated : flux_add_is_updated,
-    flux_del_is_updated : flux_del_is_updated,
-    
+
+    get_updates() {
+        return reset_updates();
+    },
+
     stream() {
         stream_start(this.medias_cam_on, this.medias_mic_on)
     },
@@ -130,7 +144,16 @@ export const linkxStore = {
                 peers[i].connection.send({ keynum: this.my_key, msg: this.my_message })
             }
         }
-        updates.messages=true;
+        messages_updated();
+    },
+    data(d) {
+        this.my_data = d;
+        for (let i = 0; i < peers.length; i++) {
+            if (peers[i].connection && peers[i].connection.open) {
+                peers[i].connection.send({ keynum: this.my_key, data: this.my_data })
+            }
+        }
+        data_updated();
     },
     init_peer() {
         reset_mypeer();
@@ -153,8 +176,8 @@ export const linkxStore = {
         localstore("videoId", videoId)
     },
     get_flux_id(id) {
-        for (let i=0;i<this.flux.length;i=i+1){
-            if(id==this.flux[i].id){return this.flux[i]}
+        for (let i = 0; i < this.flux.length; i = i + 1) {
+            if (id == this.flux[i].id) { return this.flux[i] }
         }
         return null;
     }
@@ -185,7 +208,7 @@ const stream_start = (medias_cam_on, medias_mic_on) => {
 
                 linkx_set_stream_status({ stream: s, cam: medias_cam_on, mic: medias_mic_on, medias_mic_label: curMic(), medias_cam_label: curCam(), error: "" });
                 peers_send_stream();
-                updates.stream =true;
+                stream_updated()
             })
             .catch(error => {
                 console.log(error)
@@ -209,7 +232,7 @@ const stream_kill = () => {
         stream_muted.getTracks().forEach(track => { track.stop() })
         stream_muted = null
     }
-    updates.stream =true;
+    stream_updated();
 }
 
 const listDevices = () => {
@@ -246,7 +269,7 @@ let nextCam = () => {
     videoIndex = (videoIndex + 1) % videoDevices.length
     if (oldid == videoDevices[videoIndex].deviceId) { videoIndex = (videoIndex + 1) % videoDevices.length }
     videoId = videoDevices[videoIndex].deviceId
-    updates.medias=true;
+    medias_updated();
     return videoDevices[videoIndex].label
 }
 let nextMic = () => {
@@ -255,26 +278,26 @@ let nextMic = () => {
     audioIndex = (audioIndex + 1) % audioDevices.length
     if (oldid == audioDevices[audioIndex].deviceId) { audioIndex = (audioIndex + 1) % audioDevices.length }
     audioId = audioDevices[audioIndex].deviceId
-    updates.medias=true;
+    medias_updated();
     return audioDevices[audioIndex].label
 }
 
-const linkx_set_stream_status=(data)=> {
+const linkx_set_stream_status = (data) => {
     linkxStore.medias_cam_on = data.cam
     linkxStore.medias_mic_on = data.mic
     linkxStore.medias_stream_error = data.error
     linkxStore.my_stream = data.stream
     linkxStore.medias_cam_label = data.medias_cam_label
     linkxStore.medias_mic_label = data.medias_mic_label
-    updates.medias=true;
+    medias_updated();
 }
-const linkx_set_stream_labels = (v, a)=> {
+const linkx_set_stream_labels = (v, a) => {
     linkxStore.medias_cam_label = v
     linkxStore.medias_mic_label = a
-    updates.medias=true;
+    medias_updated();
 }
 
-const peers_send_stream=()=> {
+const peers_send_stream = () => {
 
     for (let i = 0; i < peers.length; i++) {
         if (myPeer && peers[i].connection && peers[i].connection.open) {
@@ -294,7 +317,7 @@ const update_data = (data) => {
     fwl = data.fwl || [];
     linkxStore.my_key = key
     linkxStore.server_message = data.msg || ""
-    updates.infos=true;
+    infos_updated();
 }
 
 
@@ -336,7 +359,8 @@ const new_peer = (id) => {
         let keynum = "000000"
         let ifwl = fwl.map(function (e) { return e.d; }).indexOf(id);
         if (ifwl >= 0) { keynum = fwl[ifwl].k }
-        index = peers.push({ id: id, keynum: keynum, stream: null, message: "", connection: null, call: null, connected: false, called: false, streamid: "", stream_updated: false, data:{},data_updated:false,cpt: 0 }) - 1;
+        index = peers.push({ id: id, keynum: keynum, stream: null, message: "", connection: null, call: null, connected: false, called: false, streamid: "", data: {}, cpt: 0 }) - 1;
+        flux_added(id)
     }
     return peers[index];
 }
@@ -353,6 +377,7 @@ const remove_peer = (id) => {
         peers = peers.filter(function (obj) {
             return obj.id !== id;
         });
+        flux_deleted(id);
     }
 }
 
@@ -373,7 +398,7 @@ const onConnectionData = (p, data) => {
     }
     if (data.data) {
         p.data = data.data
-        p.data_updated =true;
+        flux_data_changed(id)
     }
     if (data.ask && data.ask == "callme" && stream) {
         // init_call(cxn.peer, store.stream);
@@ -391,7 +416,7 @@ const onCallStream = (p, call, stream) => {
     p.called = true;
     if (stream) {
         p.stream = stream
-        p.stream_updated = true;
+        flux_stream_changed(p.id)
     }
 }
 
@@ -401,7 +426,7 @@ const onCallStop = (p) => {
     if (p.stream) {
         p.stream.getTracks().forEach(track => { track.stop() })
         p.stream = null;
-        p.stream_updated = true;
+        flux_stream_changed(p.id)
     }
     p.call = null;
 }
@@ -457,6 +482,7 @@ const reset_mypeer = () => {
             if (peers[i] && peers[i].call && peers[i].call.open) {
                 peers[i].call.close()
             }
+            flux_deleted(peers[i].id)
         }
         peers = [];
         myPeer.destroy();
@@ -523,23 +549,29 @@ const synchro_fwl_peers = () => {
         remove_peer(todelete[i]);
     }
 
+
+
+    let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false,data:e.data } });
+
+    tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true,data:linkxStore.my_data })
+
+    if(linkxStore.flux==[]){flux_added(myPeer.id)}
+    if(updates.stream){flux_stream_changed(myPeer.id)}
+    if(updates.data){flux_data_changed(myPeer.id)}
+
+
+    linkxStore.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
+
    
+   flux_updated();
 
-        let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false } });
-
-        tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true })
-
-        linkxStore.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
-
-
-    
 
 }
 
-const linkx_message=(k, m, c)=>{
+const linkx_message = (k, m, c) => {
     if (m != "") {
         linkxStore.messages.push({ keynum: k, msg: m, cat: c })
-        updates.messages=true;
+        messages_updated()
     }
 }
 
