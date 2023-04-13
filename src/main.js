@@ -46,7 +46,7 @@ var tpl_medias = `
 var fcn_medias = _.template(tpl_medias);
 
 var tpl_infos = `
-KEY: <%= my_key %> <br/>
+KEY: <%= my_key %> <button onclick='window.linkx.req_renew()' >NEW</button><br/>
 MESSAGE: <%= my_message %> <br/>
 INFO: <%= server_message %> <br/>
 <% if (medias_stream_error != "") { %> MEDIAS ERROR : <%= medias_stream_error %> <% } %> <br/>
@@ -72,6 +72,7 @@ var fcn_flux = _.template(tpl_flux);
 const review = () => {
 
   let updates = linkxStore.get_updates();
+  console.log(updates)
   if (updates.infos) {
     document.querySelector('#infos').innerHTML = fcn_infos(linkxStore);
   }
@@ -87,13 +88,13 @@ const review = () => {
     document.querySelector('#me').srcObject = linkxStore.my_stream;
   }
 
-  if (updates.flux) {
-    if(updates.list_flux_added.length>0 ||updates.list_flux_deleted.length>0 ){
+  if (updates.flux) { 
     document.querySelector('#flux').innerHTML = fcn_flux(linkxStore);
     for(let i=0;i<linkxStore.flux.length;i=i+1){
       document.getElementById(linkxStore.flux[i].id).srcObject = linkxStore.flux[i].stream;
     }
    }
+
    if(updates.list_flux_streams_updated.length>0){
     for(let i=0;i<linkxStore.flux.length;i=i+1){
             if(updates.list_flux_streams_updated.includes(linkxStore.flux[i].id)){
@@ -107,4 +108,3 @@ const review = () => {
   //let video = document.getElementById('selfvideo');
   //video.srcObject = linkxStore.stream;
 
-}

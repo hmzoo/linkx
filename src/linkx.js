@@ -27,17 +27,18 @@ let updates = {
 
 
 
-let infos_updated = () => { updates.infos = true }
-let medias_updated = () => { updates.medias = true }
-let stream_updated = () => { updates.stream = true }
-let data_updated = () => { updates.data = true }
-let messages_updated = () => { updates.messages = true }
-let flux_updated = () => { updates.flux = true }
+let infos_updated = () => { updates.infos = true; linkxStore_update("infos"); }
+let medias_updated = () => { updates.medias = true; linkxStore_update("medias"); }
+let stream_updated = () => { updates.stream = true; linkxStore_update("stream"); }
+let data_updated = () => { updates.data = true; linkxStore_update("data"); }
+let messages_updated = () => { updates.messages = true; linkxStore_update("messages"); }
+let flux_updated = () => { updates.flux = true; linkxStore_update("flux"); }
 
-let flux_stream_changed = (id) => { updates.list_flux_streams_updated.push(id); }
-let flux_data_changed = (id) => { updates.list_flux_datas_updated.push(id); }
-let flux_added = (id) => { updates.list_flux_added.push(id); }
-let flux_deleted = (id) => { updates.list_flux_deleted.push(id); }
+let flux_stream_changed = (id) => { updates.list_flux_streams_updated.push(id); linkxStore_update("streams"); }
+let flux_data_changed = (id) => { updates.list_flux_datas_updated.push(id); linkxStore_update("datas"); }
+
+let flux_added = (id) => { updates.list_flux_added.push(id); flux_updated(); linkxStore_update("added"); }
+let flux_deleted = (id) => { updates.list_flux_deleted.push(id); flux_updated(); linkxStore_update("deleted"); }
 
 let reset_updates = () => {
     let u = updates
@@ -53,9 +54,15 @@ let reset_updates = () => {
         list_flux_added: [],
         list_flux_deleted: []
     }
+    console.log("R", u)
     return u;
 
 }
+let linkxStore_update = (m) => {
+    console.log("update",m);
+    linkxStore.synchro();
+    linkxStore.on_update();
+};
 
 //////////////////// STORE
 export const linkxStore = {
@@ -79,6 +86,9 @@ export const linkxStore = {
 
     flux: [],
     messages: [],
+    on_update() {
+        console.log("On Update");
+    },
 
     get_updates() {
         return reset_updates();
@@ -471,6 +481,7 @@ const init_mypeer = () => {
             remove_peer(id);
         })
     })
+    flux_updated();
 }
 
 const reset_mypeer = () => {
@@ -487,6 +498,7 @@ const reset_mypeer = () => {
         peers = [];
         myPeer.destroy();
     }
+
 }
 
 const init_connection = (pid, k) => {
@@ -551,19 +563,17 @@ const synchro_fwl_peers = () => {
 
 
 
-    let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false,data:e.data } });
-
-    tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true,data:linkxStore.my_data })
-
-    if(linkxStore.flux==[]){flux_added(myPeer.id)}
-    if(updates.stream){flux_stream_changed(myPeer.id)}
-    if(updates.data){flux_data_changed(myPeer.id)}
+    let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false, data: e.data } });
+    if (myPeer && myPeer.id) {
+        tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true, data: linkxStore.my_data })
+        if (linkxStore.flux == []) { flux_added(myPeer.id) }
+        //if (updates.stream) { flux_stream_changed(myPeer.id) }
+        if (updates.data) { flux_data_changed(myPeer.id) }
+    }
 
 
     linkxStore.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
 
-   
-   flux_updated();
 
 
 }
