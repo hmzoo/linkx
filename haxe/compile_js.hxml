@@ -1,0 +1,5 @@
+-cp src
+-lib heaps
+-main MainApp
+-js ../dist/app.js
+--debug

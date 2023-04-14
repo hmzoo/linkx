@@ -29,7 +29,7 @@ let updates = {
 
 let infos_updated = () => { updates.infos = true; linkxStore_update("infos"); }
 let medias_updated = () => { updates.medias = true; linkxStore_update("medias"); }
-let stream_updated = () => { updates.stream = true; linkxStore_update("stream"); }
+let stream_updated = () => { updates.stream = true; linkxStore_update("stream");if(myPeer && myPeer.id){flux_stream_changed(myPeer.id)} }
 let data_updated = () => { updates.data = true; linkxStore_update("data"); }
 let messages_updated = () => { updates.messages = true; linkxStore_update("messages"); }
 let flux_updated = () => { updates.flux = true; linkxStore_update("flux"); }
@@ -115,6 +115,7 @@ export const linkxStore = {
     },
     switch_show_me() {
         this.medias_show_me = !this.medias_show_me;
+        flux_updated();
         localstore("medias_show_me", this.medias_show_me)
     },
 
@@ -149,12 +150,13 @@ export const linkxStore = {
     message(msg) {
         this.my_message = msg;
         this.messages.push({ keynum: this.my_key, msg: this.my_message, cat: "me" })
+        messages_updated();
         for (let i = 0; i < peers.length; i++) {
             if (peers[i].connection && peers[i].connection.open) {
                 peers[i].connection.send({ keynum: this.my_key, msg: this.my_message })
             }
         }
-        messages_updated();
+        
     },
     data(d) {
         this.my_data = d;
@@ -564,11 +566,11 @@ const synchro_fwl_peers = () => {
 
 
     let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false, data: e.data } });
-    if (myPeer && myPeer.id) {
+    if (myPeer && myPeer.id  && linkxStore.medias_show_me) {
         tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true, data: linkxStore.my_data })
-        if (linkxStore.flux == []) { flux_added(myPeer.id) }
+      //  if (linkxStore.flux == []) { flux_added(myPeer.id) }
         //if (updates.stream) { flux_stream_changed(myPeer.id) }
-        if (updates.data) { flux_data_changed(myPeer.id) }
+       // if (updates.data) { flux_data_changed(myPeer.id) }
     }
 
 

@@ -7,6 +7,9 @@ window.linkx = linkxStore;
 linkxStore.stream();
 linkxStore.init_peer();
 linkxStore.req_hb();
+
+
+
 window.addEventListener('beforeunload', () => { linkxStore.leave() });
 window.setInterval(() => {
   linkxStore.req_hb();
@@ -15,33 +18,41 @@ window.setInterval(() => {
 }, 3000);
 
 let submit_addkey =()=>{
-  window.linkx.req_add(document.querySelector('#addkey').value);
+  linkxStore.req_add(document.querySelector('#addkey').value);
   return false;
 }
 
 let submit_sendmessage =()=>{
-  window.linkx.message(document.querySelector('#sendmessage').value);
+  linkxStore.message(document.querySelector('#sendmessage').value);
   return false;
 }
 
 
 var tpl_main = `<div>
+<div style="float:left">
 <div id="infos"></div>
 <div><input type='text' value="" id="addkey" ><button id="btn_addkey" >ADD</button></div>
+</div>
+<div style="float:left">
 <div id="my_stream"><video id="me" style="width:80px"  muted="true" autoplay></video></div>
 <div id="medias"></div>
+</div>
+<div style="float:left">
 <div id="messages"></div>
 <div><input type='text' value="" id="sendmessage" ><button id="btn_sendmessage" >SEND</button></div>
+</div>
+<div style="float:left">
 <div id="flux"></div>
+</div>
 </div>
 `
 document.querySelector('#app').innerHTML = _.template(tpl_main)(linkxStore);
-document.querySelector('#btn_addkey').addEventListener('click', ()=>{window.linkx.req_add(document.querySelector('#addkey').value);});
-document.querySelector('#btn_sendmessage').addEventListener('click', ()=>{window.linkx.message(document.querySelector('#sendmessage').value);});
+document.querySelector('#btn_addkey').addEventListener('click', ()=>{linkxStore.req_add(document.querySelector('#addkey').value);});
+document.querySelector('#btn_sendmessage').addEventListener('click', ()=>{linkxStore.message(document.querySelector('#sendmessage').value);});
 
 var tpl_medias = `
-<button onclick='window.linkx.switch_cam()' ><%= medias_cam_on ?  "CAM ON ("+medias_cam_label+")" : "CAM OFF" %></button><button onclick='window.linkx.swap_cam()'>►</button><br/>
-<button onclick='window.linkx.switch_mic()' ><%= medias_mic_on ?  "MIC ON("+medias_mic_label+")" : "MIC OFF" %></button><button onclick='window.linkx.swap_mic()'>►</button><br/>
+<button onclick='window.linkx.switch_cam()' ><small><%= medias_cam_on ?  "CAM ON ("+medias_cam_label+")" : "CAM OFF" %></small></button><button onclick='window.linkx.swap_cam()'>►</button><br/>
+<button onclick='window.linkx.switch_mic()' ><small><%= medias_mic_on ?  "MIC ON("+medias_mic_label+")" : "MIC OFF" %></small></button><button onclick='window.linkx.swap_mic()'>►</button><br/>
 `
 var fcn_medias = _.template(tpl_medias);
 
@@ -62,6 +73,7 @@ MESSAGES :<br/>
 var fcn_messages = _.template(tpl_messages);
 
 var tpl_flux = `
+<button onclick='window.linkx.switch_show_me()' >SHOW ME <%= medias_show_me ?  "ON " : "OFF" %></button><br/>
 <% _.each(flux, function(f){ %>
 <%= f.keynum %>: <%= f.message %></br>
 <video id="<%= f.id %>" style="width:80px"   autoplay></video></br>
@@ -84,20 +96,22 @@ const review = () => {
     document.querySelector('#messages').innerHTML = fcn_messages(linkxStore);
   }
 
-  if (updates.stream) {
+  if (updates.stream && linkxStore.my_stream) {
     document.querySelector('#me').srcObject = linkxStore.my_stream;
   }
 
   if (updates.flux) { 
     document.querySelector('#flux').innerHTML = fcn_flux(linkxStore);
     for(let i=0;i<linkxStore.flux.length;i=i+1){
+      if (linkxStore.flux[i].stream && document.getElementById(linkxStore.flux[i].id)){
       document.getElementById(linkxStore.flux[i].id).srcObject = linkxStore.flux[i].stream;
+      }
     }
    }
 
    if(updates.list_flux_streams_updated.length>0){
     for(let i=0;i<linkxStore.flux.length;i=i+1){
-            if(updates.list_flux_streams_updated.includes(linkxStore.flux[i].id)){
+            if(updates.list_flux_streams_updated.includes(linkxStore.flux[i].id)&& linkxStore.flux[i].stream){
               document.getElementById(linkxStore.flux[i].id).srcObject = linkxStore.flux[i].stream;
             }
     }
@@ -105,6 +119,7 @@ const review = () => {
 
   }
 
+  linkxStore.on_update = review
   //let video = document.getElementById('selfvideo');
   //video.srcObject = linkxStore.stream;
 
