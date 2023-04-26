@@ -25,4 +25,8 @@ services:
     volumes:
       - "./traefik:/etc/traefik"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  redis-server:
+    image: redis
+    ports: 
+      - "6379:6379"
   

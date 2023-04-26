@@ -2,8 +2,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
-const cors = require('cors');
-const fs = require('fs')
+//const cors = require('cors');
+//const fs = require('fs')
 
 let RedisStore = require("connect-redis").default;
 const Redis = require("ioredis");
@@ -17,7 +17,7 @@ const path = require('path');
 
 const myred = require('./myred.js');
 
-const isProd = process.env.NODE_ENV === 'production' 
+//const isProd = process.env.NODE_ENV === 'production' 
 
 
 const app = express();
@@ -38,8 +38,6 @@ app.use(session(
       maxAge: 86400000
     }
   }));
-
-
 
 
 
