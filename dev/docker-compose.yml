@@ -14,19 +14,41 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entryPoints.websecure.address=:443"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.file=true"
-      - "--providers.file.filename=/etc/traefik/rules.yml"
-      - "--providers.docker=true"
-      - "--providers.file.watch=true"
+
     ports:
       - "443:443"
       - "80:80"
       - "8080:8080"
     volumes:
-      - "./traefik:/etc/traefik"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
   redis-server:
     image: redis
     ports: 
       - "6379:6379"
+  
+  app:
+    build:
+      context: ..
+      dockerfile: ./Dockerfile
+    image: app
+    ports:
+      - 5000
+    environment:
+      - VITE_SITE_TITLE
+      - VITE_SITE_HOST
+      - VITE_SITE_CONTACT
+      - REDIS_PREFIX
+    volumes:
+      - "../dist:/opt/app/dist"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=5000"
+      - "traefik.http.routers.app.rule=Host(`hmdev.mshome.net`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls=true"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+      
   

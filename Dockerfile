@@ -8,12 +8,17 @@ WORKDIR /opt/app
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
+RUN npm config set strict-ssl false
+RUN npm config set registry "http://registry.npmjs.org/"
+RUN npm --proxy http://172.16.20.90:8080 install
+
+# RUN npm install
+
+
 
 # Bundle app source
 COPY . .
-RUN npm run build
+# RUN npm run build
+ 
 EXPOSE 5000
 CMD [ "npm", "run", "docker" ]

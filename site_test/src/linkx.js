@@ -54,12 +54,12 @@ let reset_updates = () => {
         list_flux_added: [],
         list_flux_deleted: []
     }
-    console.log("R", u)
+    //console.log("R", u)
     return u;
 
 }
 let linkxStore_update = (m) => {
-    console.log("update",m);
+    //console.log("update",m);
     linkxStore.synchro();
     linkxStore.on_update();
 };
@@ -87,7 +87,7 @@ export const linkxStore = {
     flux: [],
     messages: [],
     on_update() {
-        console.log("On Update");
+       // console.log("On Update");
     },
 
     get_updates() {

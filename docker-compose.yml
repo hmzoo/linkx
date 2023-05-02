@@ -32,6 +32,8 @@ services:
       - VITE_SITE_HOST
       - VITE_SITE_CONTACT
       - REDIS_PREFIX
+    volumes:
+      - "../dist:/dist"
     labels:
       - "traefik.enable=true"
       - "traefik.port=5000"

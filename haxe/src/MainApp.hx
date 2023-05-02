@@ -19,11 +19,11 @@ class  MainApp  extends hxd.App {
         
         linkx = window.get('linkx');
         trace(linkx);
-        trace(linkx.get('my_key'));
+        //trace(linkx.get('my_key'));
 
         infos = new h2d.Text(hxd.res.DefaultFont.get());
         //infos.text = linkx.my_key;
-        infos.text = "ok";
+        infos.text = "yes";
 
         button = new haap.Button("BTN",50,20);
         button.x=100;
@@ -37,7 +37,7 @@ class  MainApp  extends hxd.App {
     }
 
     function ok(){
-        trace("oketo",window.get('shared'));
+        trace("oketo",window.get('linkx'));
     }
 
     override function update(dt:Float) {
