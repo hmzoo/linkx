@@ -1,0 +1,24 @@
+{
+  "name": "linkx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "browserify": "browserify linkx.js -p esmify > bundle.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "peerjs": "^1.4.7",
+    "store2": "^2.14.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "babelify": "^10.0.0",
+    "babylon": "^6.18.0",
+    "browserify": "^17.0.0",
+    "esmify": "^2.1.1"
+  }
+}

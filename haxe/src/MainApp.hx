@@ -4,7 +4,9 @@ import js.Browser;
 import js.lib.Object;
 
 var window:haxe.DynamicAccess<Dynamic> = untyped js.Browser.window;
-
+@:native('linkx') extern class Myjs {
+    static var my_key:String;
+}
 class  MainApp  extends hxd.App {
 
     var infos:h2d.Text;
@@ -17,13 +19,20 @@ class  MainApp  extends hxd.App {
 
         hxd.Res.initEmbed();
         
-        linkx = window.get('linkx');
-        trace(linkx);
+        //linkx = window.get('linkx');
+
+        
+
+        trace("cool");
+        trace(Myjs.my_key);
+       
+        trace("cool2");
+        
         //trace(linkx.get('my_key'));
 
         infos = new h2d.Text(hxd.res.DefaultFont.get());
         //infos.text = linkx.my_key;
-        infos.text = "yes";
+        infos.text = "ok";
 
         button = new haap.Button("BTN",50,20);
         button.x=100;
@@ -37,7 +46,7 @@ class  MainApp  extends hxd.App {
     }
 
     function ok(){
-        trace("oketo",window.get('linkx'));
+        trace(Myjs.my_key);
     }
 
     override function update(dt:Float) {

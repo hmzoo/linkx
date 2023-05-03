@@ -5,19 +5,11 @@ import localstore from 'store2';
 axios.defaults.withCredentials = true;
 //axios.defaults.headers.get['Access-Control-Allow-Origin'] = '*';
 
-
-
-
-
-
-
-
-
-const site_host = import.meta.env.VITE_SITE_HOST || "linkx.com";
-const site_title = import.meta.env.VITE_SITE_TITLE || "LINKX";
 const axios_url = "";
 
+
 //////////////////// UPDATE
+
 
 let updates = {
     infos: true,
@@ -34,18 +26,18 @@ let updates = {
 
 
 
-let infos_updated = () => { updates.infos = true; linkxStore_update("infos"); }
-let medias_updated = () => { updates.medias = true; linkxStore_update("medias"); }
-let stream_updated = () => { updates.stream = true; linkxStore_update("stream");if(myPeer && myPeer.id){flux_stream_changed(myPeer.id)} }
-let data_updated = () => { updates.data = true; linkxStore_update("data"); }
-let messages_updated = () => { updates.messages = true; linkxStore_update("messages"); }
-let flux_updated = () => { updates.flux = true; linkxStore_update("flux"); }
+let infos_updated = () => { updates.infos = true; linkx_update("infos"); }
+let medias_updated = () => { updates.medias = true; linkx_update("medias"); }
+let stream_updated = () => { updates.stream = true; linkx_update("stream"); if (myPeer && myPeer.id) { flux_stream_changed(myPeer.id) } }
+let data_updated = () => { updates.data = true; linkx_update("data"); }
+let messages_updated = () => { updates.messages = true; linkx_update("messages"); }
+let flux_updated = () => { updates.flux = true; linkx_update("flux"); }
 
-let flux_stream_changed = (id) => { updates.list_flux_streams_updated.push(id); linkxStore_update("streams"); }
-let flux_data_changed = (id) => { updates.list_flux_datas_updated.push(id); linkxStore_update("datas"); }
+let flux_stream_changed = (id) => { updates.list_flux_streams_updated.push(id); linkx_update("streams"); }
+let flux_data_changed = (id) => { updates.list_flux_datas_updated.push(id); linkx_update("datas"); }
 
-let flux_added = (id) => { updates.list_flux_added.push(id); flux_updated(); linkxStore_update("added"); }
-let flux_deleted = (id) => { updates.list_flux_deleted.push(id); flux_updated(); linkxStore_update("deleted"); }
+let flux_added = (id) => { updates.list_flux_added.push(id); flux_updated(); linkx_update("added"); }
+let flux_deleted = (id) => { updates.list_flux_deleted.push(id); flux_updated(); linkx_update("deleted"); }
 
 let reset_updates = () => {
     let u = updates
@@ -65,17 +57,16 @@ let reset_updates = () => {
     return u;
 
 }
-let linkxStore_update = (m) => {
+let linkx_update = (m) => {
     //console.log("update",m);
-    linkxStore.synchro();
-    linkxStore.on_update();
+    linkx.synchro();
+    linkx.on_update();
 };
 
 //////////////////// STORE
-export const linkxStore = {
+const  linkx = {
 
-    site_host: site_host,
-    site_title: site_title,
+
 
     medias_cam_on: localstore("medias_cam_on") == null || localstore("medias_cam_on"),
     medias_mic_on: !(localstore("medias_mic_on") == null) || localstore("medias_mic_on"),
@@ -94,7 +85,7 @@ export const linkxStore = {
     flux: [],
     messages: [],
     on_update() {
-       // console.log("On Update");
+        // console.log("On Update");
     },
 
     get_updates() {
@@ -163,7 +154,7 @@ export const linkxStore = {
                 peers[i].connection.send({ keynum: this.my_key, msg: this.my_message })
             }
         }
-        
+
     },
     data(d) {
         this.my_data = d;
@@ -302,17 +293,17 @@ let nextMic = () => {
 }
 
 const linkx_set_stream_status = (data) => {
-    linkxStore.medias_cam_on = data.cam
-    linkxStore.medias_mic_on = data.mic
-    linkxStore.medias_stream_error = data.error
-    linkxStore.my_stream = data.stream
-    linkxStore.medias_cam_label = data.medias_cam_label
-    linkxStore.medias_mic_label = data.medias_mic_label
+    linkx.medias_cam_on = data.cam
+    linkx.medias_mic_on = data.mic
+    linkx.medias_stream_error = data.error
+    linkx.my_stream = data.stream
+    linkx.medias_cam_label = data.medias_cam_label
+    linkx.medias_mic_label = data.medias_mic_label
     medias_updated();
 }
 const linkx_set_stream_labels = (v, a) => {
-    linkxStore.medias_cam_label = v
-    linkxStore.medias_mic_label = a
+    linkx.medias_cam_label = v
+    linkx.medias_mic_label = a
     medias_updated();
 }
 
@@ -334,8 +325,8 @@ let fwl = []
 const update_data = (data) => {
     key = data.key || "no key";
     fwl = data.fwl || [];
-    linkxStore.my_key = key
-    linkxStore.server_message = data.msg || ""
+    linkx.my_key = key
+    linkx.server_message = data.msg || ""
     infos_updated();
 }
 
@@ -402,6 +393,7 @@ const remove_peer = (id) => {
 
 // Connections
 const onConnectionOpen = (p, cxn) => {
+    console.log("CXN",p,cxn)
     p.connection = cxn
     p.connected = true
     cxn.send({ keynum: key });
@@ -456,12 +448,13 @@ const onCallStop = (p) => {
 const init_mypeer = () => {
     myPeer = new Peer()
     myPeer.on('open', (id) => {
-        linkxStore.req_set(id);
+        linkx.req_set(id);
         myPeer.on('connection', (cxn) => {
             let p = new_peer(cxn.peer);
-            cxn.on('open', () => { onConnectionOpen(p, cxn) })
-            cxn.on('data', (data) => { onConnectionData(p, data) })
-            cxn.on('close', () => { onConnectionClose(p) })
+            console.log("new_peer",cxn.peer)
+            cxn.on('open', () => { console.log("init_peer");if(p){onConnectionOpen(p, cxn) }})
+            cxn.on('data', (data) => {if(p){ onConnectionData(p, data)} })
+            cxn.on('close', () => { if(p){onConnectionClose(p)} })
         })
         myPeer.on('call', (call) => {
             let p = new_peer(call.peer);
@@ -470,9 +463,9 @@ const init_mypeer = () => {
             } else {
                 call.answer()
             }
-            call.on('stream', (stream) => { onCallStream(p, call, stream) })
-            call.on('close', () => { onCallStop(p) })
-            call.on('error', (err) => { console.log(err); onCallStop(p) })
+            call.on('stream', (stream) => { if(p){onCallStream(p, call, stream)} })
+            call.on('close', () => { if(p){onCallStop(p) }})
+            call.on('error', (err) => { console.log(err);if(p){ onCallStop(p)} })
         })
 
         myPeer.on('close', () => {
@@ -514,10 +507,10 @@ const init_connection = (pid, k) => {
     let cxn = myPeer.connect(pid)
     if (cxn) {
         let p = new_peer(cxn.peer);
-        p.keynum = k;
-        cxn.on('open', () => { onConnectionOpen(p, cxn) })
-        cxn.on('data', (data) => { onConnectionData(p, data) })
-        cxn.on('close', () => { onConnectionClose(p) })
+        if(p){p.keynum = k;}
+        cxn.on('open', () => { console.log("init_connection");if(p){onConnectionOpen(p, cxn)} })
+        cxn.on('data', (data) => { if(p){onConnectionData(p, data)} })
+        cxn.on('close', () => { if(p){onConnectionClose(p)} })
     }
 }
 
@@ -573,15 +566,15 @@ const synchro_fwl_peers = () => {
 
 
     let tab = peers.map((e) => { return { id: e.id, keynum: e.keynum, stream: e.stream || fakestream, message: e.message, connected: e.connected, me: false, data: e.data } });
-    if (myPeer && myPeer.id  && linkxStore.medias_show_me) {
-        tab.push({ id: myPeer.id, keynum: linkxStore.my_key, stream: stream_muted || fakestream, message: linkxStore.my_message, connected: true, me: true, data: linkxStore.my_data })
-      //  if (linkxStore.flux == []) { flux_added(myPeer.id) }
+    if (myPeer && myPeer.id && linkx.medias_show_me) {
+        tab.push({ id: myPeer.id, keynum: linkx.my_key, stream: stream_muted || fakestream, message: linkx.my_message, connected: true, me: true, data: linkx.my_data })
+        //  if (linkx.flux == []) { flux_added(myPeer.id) }
         //if (updates.stream) { flux_stream_changed(myPeer.id) }
-       // if (updates.data) { flux_data_changed(myPeer.id) }
+        // if (updates.data) { flux_data_changed(myPeer.id) }
     }
 
 
-    linkxStore.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
+    linkx.flux = tab.sort((a, b) => (a.keynum > b.keynum) ? 1 : -1)
 
 
 
@@ -589,12 +582,22 @@ const synchro_fwl_peers = () => {
 
 const linkx_message = (k, m, c) => {
     if (m != "") {
-        linkxStore.messages.push({ keynum: k, msg: m, cat: c })
+        linkx.messages.push({ keynum: k, msg: m, cat: c })
         messages_updated()
     }
 }
 
+linkx.init_peer();
+linkx.req_hb();
 
 
 
+window.addEventListener('beforeunload', () => { linkx.leave() });
+window.setInterval(() => {
+  linkx.req_hb();
+  linkx.synchro();
+  console.log("TIC");
+}, 3000);
+
+module.exports = linkx;
 
