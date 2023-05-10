@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "browserify": "browserify linkx.js -p esmify > bundle.js"
+    "browserify": "browserify main.js -p esmify > ../dist/bundle.js"
   },
   "author": "",
   "license": "ISC",

@@ -587,17 +587,7 @@ const linkx_message = (k, m, c) => {
     }
 }
 
-linkx.init_peer();
-linkx.req_hb();
 
-
-
-window.addEventListener('beforeunload', () => { linkx.leave() });
-window.setInterval(() => {
-  linkx.req_hb();
-  linkx.synchro();
-  console.log("TIC");
-}, 3000);
 
 module.exports = linkx;
 
