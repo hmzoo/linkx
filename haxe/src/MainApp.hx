@@ -13,7 +13,7 @@ class  MainApp  extends hxd.App {
 
     var infos:h2d.Text;
     var button:haap.Button;
-    var video:haap.Video;
+    var video:haap.MyVideo;
     
     
 
@@ -44,8 +44,8 @@ class  MainApp  extends hxd.App {
         button.y=100;
         button.action = function(){ok();};
 
-        video = new haap.Video();
-         trace("video",video.v);
+        video = new haap.MyVideo();
+         trace("video",video);
 
         s2d.scaleMode = Resize;
         s2d.addChild(infos); 
@@ -55,8 +55,11 @@ class  MainApp  extends hxd.App {
         Linkx.on_update=function(){
             var u=Linkx.get_updates();
             if(u.stream){
-                trace("STREAM",Linkx.my_stream);
-               //video.v.srcObject=Linkx.my_stream;
+                trace("STREAM A",Linkx.my_stream);
+                
+                video.srcObject(Linkx.my_stream);
+   
+                trace("STREAM B",video.v.srcObject);
             }
         
         };
