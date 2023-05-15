@@ -46,6 +46,7 @@ class  MainApp  extends hxd.App {
 
         video = new haap.MyVideo();
          trace("video",video);
+         
 
         s2d.scaleMode = Resize;
         s2d.addChild(infos); 

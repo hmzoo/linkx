@@ -220,6 +220,9 @@ class MyVideo extends Drawable {
 			frameReady = true;
 			videoWidth = v.videoWidth;
 			videoHeight = v.videoHeight;
+			var s = 160/v.videoWidth;
+			this.scaleX=s;
+			this.scaleY=s;
 			texture = new h3d.mat.Texture(videoWidth, videoHeight);
 			tile = h2d.Tile.fromTexture(texture);
 			playing = true;

@@ -34,6 +34,63 @@ const rankey = () => { return "" + (100000 + Math.floor(Math.random() * 900000))
 const pf = (k) => { return prefix + k }
 
 
+//UTILS
+
+let create_key = (uid, key) => {
+    redis.del("data_" + pf(key));
+    redis.del("flw_" + pf(key));
+    redis.del("sec_" + pf(key));
+    redis.set("sec_" + pf(key), 0, 'ex', ttl);
+    return redis.set("uid_" + pf(key), uid, 'ex', ttl)
+}
+
+let delete_key = (key) => {
+    redis.exists("fwl_" + pf(key)).then(ans => {
+        if (ans != 1) {
+            redis.smembers("fwl_" + pf(key)).then(keys => {
+                for (let i = 0; i < keys.length; i++) {
+                    redis.exists("fwl_" + pf(keys[i])).then(ans => {
+                        if (ans != 1) {
+                            redis.srem("fwl_" + pf(keys[i]), key);
+                        }
+                    })
+                }
+            })
+        }
+    })
+
+    redis.del("uid_" + pf(key));
+    redis.del("data_" + pf(key));
+    redis.del("flw_" + pf(key));
+    redis.del("sec_" + pf(key));
+
+}
+
+let create_fwl = (key, qkey,tkeys=[]) => {
+    if(key == qkey){return}
+    redis.exists("fwl_" + pf(key)).then(ans => {
+        if (ans != 1) {
+            redis.sadd("fwl_" + pf(key), qkey).then(ans => {
+                redis.smembers("fwl_" + pf(key)).then(keys => {
+                    for (let i = 0; i < keys.length; i++) {
+                        redis.sadd("fwl_" + pf(keys[i]), qkey)
+                    }
+                })
+            })
+        }
+    })
+}
+
+
+let delete_fwl = (key, qkey) => {
+    redis.exists("fwl_" + pf(key)).then(ans => {
+        if (ans != 1) {
+            redis.srem("fwl_" + pf(key), qkey);
+        }
+    })
+}
+
+
 const myred = {
     new_key: (uid, n = 1000) => {
 
@@ -45,12 +102,7 @@ const myred = {
             if (ans == 1) {
                 return myred.new_key(uid, n - 1);
             } else {
-                redis.del("data_" + pf(key));
-                redis.del("flw_" + pf(key));
-                redis.del("sec_" + pf(key));
-                let msg = "Your key is " + key;
-                redis.set("sec_" + pf(key), 0, 'ex', ttl);
-                return redis.set("uid_" + pf(key), uid, 'ex', ttl).then(ans => { return myred.json_data(key, msg) });
+                return create_key(uid, key).then(ans => { return myred.json_data(key, "Your key is " + key) });
 
                 /*
                 return redis.sadd("fwl_" + key, key).then(rep=>{
