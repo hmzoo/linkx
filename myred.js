@@ -35,7 +35,7 @@ const pf = (k) => { return prefix + k }
 
 
 //UTILS
-
+// CREATE KEY 
 let create_key = (uid, key) => {
     redis.del("data_" + pf(key));
     redis.del("flw_" + pf(key));
@@ -43,7 +43,7 @@ let create_key = (uid, key) => {
     redis.set("sec_" + pf(key), 0, 'ex', ttl);
     return redis.set("uid_" + pf(key), uid, 'ex', ttl)
 }
-
+// REMOVE KEY and LINKS
 let delete_key = (key) => {
     redis.exists("fwl_" + pf(key)).then(ans => {
         if (ans != 1) {
@@ -66,29 +66,58 @@ let delete_key = (key) => {
 
 }
 
-let create_fwl = (key, qkey,tkeys=[]) => {
-    if(key == qkey){return}
-    redis.exists("fwl_" + pf(key)).then(ans => {
-        if (ans != 1) {
-            redis.sadd("fwl_" + pf(key), qkey).then(ans => {
+// NEW LINK
+
+let create_link = (key, qkey) => {
+ 
+    redis.exists("fwl_" + pf(key)).then(ansk => {
+        if (ansk != 1 && key != qkey) {
+            redis.smembers("fwl_" + pf(qkey)).then(qkeys => {
+                let skeys = qkeys.filter(function(value){ return value != key });
                 redis.smembers("fwl_" + pf(key)).then(keys => {
-                    for (let i = 0; i < keys.length; i++) {
-                        redis.sadd("fwl_" + pf(keys[i]), qkey)
-                    }
-                })
-            })
+
+                    
+                    skeys.push(qkey);
+
+                    redis.sadd("fwl_" + pf(key), skeys).then(a=>{
+                        for (let i = 0; i < keys.length; i++) {
+                            if(!qkeys.contains(key[i])){
+                                create_link(keys[i],qkey)
+                            }
+                        }
+                    })
+
+
+
+
+
+
+            redis.exists("fwl_" + pf(qkey)).then(ansq => {
+                if (ansq != 1 ) {
+                    redis.smembers("fwl_" + pf(qkey)).then(qkeys => {
+                        redis.sadd("fwl_" + pf(key), qkeys).then(a=>
+                            redis.smembers("fwl_" + pf(key)).then( keys => {
+                                let test = keys.includes( qkey);
+
+                                for (let i = 0; i < keys.length; i++) {
+                                    let skeys = keys.filter(function(value, index, arr){ return value != keys[i] });
+                                    skeys.push(key);
+                                    redis.sadd("fwl_" + pf(keys[i]), skeys)
+                                }
+            
+                            })
+                            
+                            
+
+
+
+            
         }
     })
 }
 
 
-let delete_fwl = (key, qkey) => {
-    redis.exists("fwl_" + pf(key)).then(ans => {
-        if (ans != 1) {
-            redis.srem("fwl_" + pf(key), qkey);
-        }
-    })
-}
+
 
 
 const myred = {
