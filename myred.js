@@ -70,50 +70,39 @@ let delete_key = (key) => {
 
 let create_link = (key, qkey) => {
  
-    redis.exists("fwl_" + pf(key)).then(ansk => {
-        if (ansk != 1 && key != qkey) {
-            redis.smembers("fwl_" + pf(qkey)).then(qkeys => {
-                let skeys = qkeys.filter(function(value){ return value != key });
-                redis.smembers("fwl_" + pf(key)).then(keys => {
-
-                    
-                    skeys.push(qkey);
-
-                    redis.sadd("fwl_" + pf(key), skeys).then(a=>{
-                        for (let i = 0; i < keys.length; i++) {
-                            if(!qkeys.contains(key[i])){
-                                create_link(keys[i],qkey)
-                            }
-                        }
-                    })
-
-
-
-
-
-
-            redis.exists("fwl_" + pf(qkey)).then(ansq => {
-                if (ansq != 1 ) {
-                    redis.smembers("fwl_" + pf(qkey)).then(qkeys => {
-                        redis.sadd("fwl_" + pf(key), qkeys).then(a=>
-                            redis.smembers("fwl_" + pf(key)).then( keys => {
-                                let test = keys.includes( qkey);
-
-                                for (let i = 0; i < keys.length; i++) {
-                                    let skeys = keys.filter(function(value, index, arr){ return value != keys[i] });
-                                    skeys.push(key);
-                                    redis.sadd("fwl_" + pf(keys[i]), skeys)
-                                }
-            
-                            })
-                            
-                            
-
-
-
-            
+   return  redis.exists("fwl_" + pf(key),"fwl_" + pf(qkey)).then(ans => {
+      console.log("create_link",ans)
+            if (ans >= 0  && key != qkey) {
+                return redis.sadd("fwl_" + pf(key), qkey).then(a=>{
+                    return redis.sadd("fwl_" + pf(qkey), key)})
+                } else {
+                    return -1
+                }
+           }).catch(error => {console.log("redis error",error); return -1});
+    
         }
-    })
+
+let create_links =(key,qkey) =>{
+    create_link(key,qkey).then(ans=>{
+        if(ans >= 0){
+             redis.smembers("fwl_" + pf(qkey)).then(qkeys => {
+             redis.smembers("fwl_" + pf(key)).then(keys => {
+                console.log("key",key,"qkey",qkeys,"keys",keys,"qkeys",qkeys)
+                for (let i = 0; i < keys.length; i++) {
+                    console.log("keys[i]",key[i])
+                    if(!qkeys.includes(keys[i]) && keys[i]!=qkey ){
+                        create_links(keys[i],qkey)
+                    }
+                }
+                for (let i = 0; i < qkeys.length; i++) {
+                    console.log("qkeys[i]",qkeys[i])
+                    if(!keys.includes(qkeys[i]) && qkeys[i]!=key ){
+                        create_links(qkeys[i],key)
+                    }
+                }
+        })
+
+    })}})
 }
 
 
@@ -150,10 +139,8 @@ const myred = {
         }
     },
     reset_key: (key) => {
-        redis.del("uid_" + pf(key));
-        redis.del("data_" + pf(key));
-        redis.del("flw_" + pf(key));
-        redis.del("sec_" + pf(key));
+        delete_key(key)
+
     },
     set_data: (key, val) => {
         let msg = "";
@@ -169,8 +156,8 @@ const myred = {
                     let msg = "";
                     if (ans) {
                         msg = qkey + " added";
-                        redis.sadd("fwl_" + pf(qkey), key);
-                        return redis.sadd("fwl_" + pf(key), qkey).then(r => { return myred.json_data(key, msg) })
+                        create_links(key,qkey);
+                         return myred.json_data(key, msg) 
                     } else {
                         redis.incr("sec_" + pf(key))
                         msg = "nobody at " + qkey + " !!";
