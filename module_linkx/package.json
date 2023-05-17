@@ -2,9 +2,9 @@
   "name": "linkx",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "browserify": "browserify main.js -p esmify > ../dist/bundle.js"
+    "browserify": "browserify main.js -p esmify > ../dist/linkx.js"
   },
   "author": "",
   "license": "ISC",

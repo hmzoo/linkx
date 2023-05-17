@@ -10,8 +10,8 @@ window.addEventListener('beforeunload', () => { linkx.leave() });
 window.setInterval(() => {
   linkx.req_hb();
   linkx.synchro();
-  console.log("TIC");
-}, 3000);
+ // console.log("TIC");
+}, 2000);
 
 window.linkx=linkx;
 
