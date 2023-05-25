@@ -7,20 +7,25 @@ services:
       - "--api.insecure=true"
       - "--api.dashboard=true"
       - "--api.debug=true"
-      - "--providers.docker=true"
       - "--log.LEVEL=DEBUG"
       - "--entryPoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entryPoints.websecure.address=:443"
+      - "--entryPoints.devsecure.address=:8443"
+      - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.file=true"
+      - "--providers.file.filename=/etc/traefik/rules.yml"
 
     ports:
       - "443:443"
       - "80:80"
       - "8080:8080"
+      - "8443:8443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./rules.yml:/etc/traefik/rules.yml"
   redis-server:
     image: redis
     ports: 

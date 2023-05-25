@@ -11,7 +11,14 @@ const microOn =ref(true)
 <template>
 <div class="header">
     <div class="home-menu pure-menu pure-menu-horizontal ">
-        <a class="pure-menu-heading" href="">O</a>
+        <a class="pure-menu-heading" href="">A</a>
+        <div class="pure-g">
+       
+        <input type="number" class="pure-input pure-u-3-5" />
+        <button  class="pure-button pure-button-primary pure-u-2-5">CALL</button>
+        
+        </div>
+   
 
         <ul class="pure-menu-list">
             <li class="pure-menu-item "><a href="#" class="pure-menu-link" v-on:click="videoOn = !videoOn"><BtnCam :is_on="videoOn"/></a></li>

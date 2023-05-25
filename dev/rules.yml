@@ -1,0 +1,13 @@
+http:
+  routers:
+    router0:
+      rule: Host(`hmdev.mshome.net`)
+      entrypoints : 
+        - devsecure
+      service: app
+      tls: {}
+  services:
+    app:
+      loadbalancer:
+        servers:
+          - url: 'http://172.20.17.126:5173'
